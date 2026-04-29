@@ -1,92 +1,69 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+  Cell,
+} from "recharts";
 
 const expenseFields = [
-  ["rent", "Rent", "Your weekly rent or accommodation cost."],
-  [
-    "groceries",
-    "Groceries",
-    "Food and household essentials from supermarkets.",
-  ],
-  ["transport", "Transport", "Public transport, fuel, parking, or rideshare."],
-  ["phone", "Phone", "Mobile plan and phone-related costs."],
-  [
-    "tuition",
-    "Tuition / uni fees",
-    "Weekly amount set aside for course costs.",
-  ],
-  [
-    "subscriptions",
-    "Subscriptions",
-    "Streaming, apps, software, gym memberships.",
-  ],
-  [
-    "hygiene",
-    "Hygiene / personal care",
-    "Toiletries, skincare, haircare, and self-care.",
-  ],
-  [
-    "periodCare",
-    "Period care / health",
-    "Period products, pharmacy, and health basics.",
-  ],
-  ["pets", "Pets", "Food, vet costs, and pet essentials."],
-  [
-    "familySupport",
-    "Kids / family support",
-    "Money sent home or spent on dependents.",
-  ],
-  ["fun", "Eating out / fun", "Cafes, restaurants, social activities."],
-  ["custom", "Custom expenses", "Any weekly cost unique to your situation."],
+  ["rent", "Rent", "Usually fixed weekly housing cost."],
+  ["groceries", "Groceries", "Food + essentials."],
+  ["transport", "Transport", "Public transport/fuel/rideshare."],
+  ["phone", "Phone", "Mobile + data plan."],
+  ["tuition", "Tuition / uni fees", "Weekly set-aside for studies."],
+  ["subscriptions", "Subscriptions", "Streaming/apps/gym."],
+  ["hygiene", "Hygiene / personal care", "Toiletries and care."],
+  ["periodCare", "Period care / health", "Health and period costs."],
+  ["pets", "Pets", "Food and vet basics."],
+  ["familySupport", "Kids / family support", "Dependents/support home."],
+  ["fun", "Eating out / fun", "Optional social spending."],
+  ["custom", "Custom expenses", "Other recurring spending."],
 ];
-
+const colors = [
+  "#7c3aed",
+  "#22d3ee",
+  "#f43f5e",
+  "#f59e0b",
+  "#10b981",
+  "#6366f1",
+  "#06b6d4",
+  "#84cc16",
+  "#f97316",
+  "#ec4899",
+  "#eab308",
+  "#64748b",
+];
 const learnCards = [
-  {
-    key: "budgeting",
-    title: "Budgeting",
-    explain: "A budget tells every dollar where to go before the week starts.",
-    why: "International students often juggle tuition, rent, and variable shifts, so planning ahead reduces stress.",
-    action:
-      "Set one weekly spending cap for eating out/fun and track it daily.",
-    link: "https://moneysmart.gov.au/budgeting/how-to-do-a-budget",
-  },
-  {
-    key: "emergency",
-    title: "Emergency fund",
-    explain:
-      "Emergency savings protect you from surprise costs like medical bills or reduced shifts.",
-    why: "Visa and work limitations can make income less stable, so a cash buffer matters more.",
-    action: "Transfer a fixed amount to savings on payday.",
-    link: "https://moneysmart.gov.au/saving/emergency-fund",
-  },
-  {
-    key: "etf",
-    title: "ETFs",
-    explain:
-      "ETFs are baskets of investments that can spread risk across many companies.",
-    why: "They can be a beginner-friendly way to learn investing after emergency savings are in place.",
-    action: "Learn ETF basics first; don’t invest money you might need soon.",
-    link: "https://moneysmart.gov.au/how-to-invest/exchange-traded-funds-etfs",
-  },
-  {
-    key: "tfn",
-    title: "Tax / TFN basics",
-    explain:
-      "A TFN helps employers tax you correctly and is important for lodging tax returns.",
-    why: "International students in Australia should understand tax withholding early to avoid surprises.",
-    action: "Check your TFN details and keep payslips for tax time.",
-    link: "https://www.ato.gov.au/individuals-and-families/tax-file-number",
-  },
-  {
-    key: "super",
-    title: "Superannuation basics",
-    explain:
-      "Super is money employers contribute for retirement when eligible.",
-    why: "Students with part-time jobs may still receive super contributions from employers.",
-    action: "Check your super fund, fees, and contribution history.",
-    link: "https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families",
-  },
+  ["Budgeting", "https://moneysmart.gov.au/budgeting"],
+  [
+    "Emergency fund",
+    "https://moneysmart.gov.au/saving/save-for-an-emergency-fund",
+  ],
+  [
+    "ETFs",
+    "https://moneysmart.gov.au/managed-funds-and-etfs/exchange-traded-funds-etfs",
+  ],
+  [
+    "TFN/tax",
+    "https://www.ato.gov.au/individuals-and-families/tax-file-number",
+  ],
+  [
+    "Super",
+    "https://www.ato.gov.au/individuals-and-families/super-for-individuals-and-families",
+  ],
 ];
-
+const toneMap = {
+  gentle: "Warm, reassuring, kind.",
+  strict: "Direct, firm, no excuses.",
+  "big sister": "Caring but blunt and practical.",
+  "wealth coach": "Focused on systems, discipline, and long-term wealth.",
+};
 const defaultState = {
   profile: {
     name: "",
@@ -117,22 +94,20 @@ const defaultState = {
     mistake: "",
     proud: "",
   },
+  mentorMode: "gentle",
 };
-
 const aud = (n) =>
   new Intl.NumberFormat("en-AU", {
     style: "currency",
     currency: "AUD",
     maximumFractionDigits: 0,
   }).format(Number(n || 0));
-
-const toNum = (v) => Number(v || 0);
-
+const num = (v) => Number(v || 0);
 const Field = ({ label, helper, children }) => (
   <label className="block space-y-1">
-    <span className="font-medium text-sm">{label}</span>
+    <div className="text-sm font-semibold">{label}</div>
     {children}
-    <span className="text-xs text-slate-400">{helper}</span>
+    <div className="text-xs text-slate-400">{helper}</div>
   </label>
 );
 
@@ -140,161 +115,182 @@ export default function App() {
   const [tab, setTab] = useState("dashboard");
   const [state, setState] = useState(
     () =>
-      JSON.parse(localStorage.getItem("mm-state-v2") || "null") || defaultState,
+      JSON.parse(localStorage.getItem("mm-state-v3") || "null") || defaultState,
   );
   const [checkins, setCheckins] = useState(() =>
-    JSON.parse(localStorage.getItem("mm-checkins-v2") || "[]"),
+    JSON.parse(localStorage.getItem("mm-checkins-v3") || "[]"),
   );
-  const [expandedLearn, setExpandedLearn] = useState("budgeting");
   const [showPlan, setShowPlan] = useState(false);
   const [mentorQuestion, setMentorQuestion] = useState(
     "What should I do with my money this week?",
   );
   const [mentorAdvice, setMentorAdvice] = useState("");
-  const [mentorLoading, setMentorLoading] = useState(false);
   const [mentorError, setMentorError] = useState("");
-
+  const [mentorLoading, setMentorLoading] = useState(false);
   useEffect(
-    () => localStorage.setItem("mm-state-v2", JSON.stringify(state)),
+    () => localStorage.setItem("mm-state-v3", JSON.stringify(state)),
     [state],
   );
   useEffect(
-    () => localStorage.setItem("mm-checkins-v2", JSON.stringify(checkins)),
+    () => localStorage.setItem("mm-checkins-v3", JSON.stringify(checkins)),
     [checkins],
   );
 
   const totals = useMemo(() => {
-    const weeklyIncome = toNum(state.profile.weeklyIncome);
-    const weeklyExpenses = expenseFields.reduce(
-      (sum, [k]) => sum + toNum(state.expenses[k]),
+    const income = num(state.profile.weeklyIncome);
+    const expenses = expenseFields.reduce(
+      (s, [k]) => s + num(state.expenses[k]),
       0,
     );
-    const leftover = weeklyIncome - weeklyExpenses;
-    const savingsRate = weeklyIncome > 0 ? (leftover / weeklyIncome) * 100 : 0;
-    return { weeklyIncome, weeklyExpenses, leftover, savingsRate };
+    const leftover = income - expenses;
+    return {
+      income,
+      expenses,
+      leftover,
+      savingsRate: income > 0 ? (leftover / income) * 100 : 0,
+    };
   }, [state]);
+  const emergencyTarget = totals.expenses * 8;
 
   const goalWeekly = useMemo(() => {
-    const perWeek = (amount, deadline) => {
-      if (!amount || !deadline) return 0;
-      const diffDays = Math.max(
-        1,
-        Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000),
+    const calc = (amount, deadline) => {
+      if (!deadline)
+        return { value: 0, status: "Add a deadline to calculate." };
+      const d = new Date(deadline);
+      if (Number.isNaN(d.getTime()))
+        return { value: 0, status: "Add a deadline to calculate." };
+      const diff = Math.ceil((d.getTime() - Date.now()) / 86400000);
+      if (diff <= 0) return { value: 0, status: "Deadline has passed." };
+      const remain = Math.max(
+        0,
+        num(amount) - num(state.profile.currentSavings),
       );
-      return toNum(amount) / Math.max(1, Math.ceil(diffDays / 7));
+      const weeks = Math.max(1, Math.ceil(diff / 7));
+      return { value: remain / weeks, status: "ok" };
     };
-    const short = perWeek(state.goals.shortAmount, state.goals.shortDeadline);
-    const long = perWeek(state.goals.longAmount, state.goals.longDeadline);
-    return { short, long, total: short + long };
-  }, [state.goals]);
+    const short = calc(state.goals.shortAmount, state.goals.shortDeadline);
+    const long = calc(state.goals.longAmount, state.goals.longDeadline);
+    return { short, long, total: short.value + long.value };
+  }, [state.goals, state.profile.currentSavings]);
 
-  const emergencyTarget = totals.weeklyExpenses * 8;
-
-  const mentorSummary =
-    totals.weeklyIncome > 0
-      ? `You earn ${aud(totals.weeklyIncome)}/week and spend ${aud(totals.weeklyExpenses)}/week, leaving ${aud(totals.leftover)}. Your first priority is building an emergency fund of about ${aud(emergencyTarget)} before investing.`
-      : "Start with your profile so I can give advice based on your real life.";
-
-  const planSections = useMemo(() => {
-    const reality =
-      totals.leftover < 0
-        ? `Right now you are spending ${aud(Math.abs(totals.leftover))} more than you earn each week.`
-        : `You currently have ${aud(totals.leftover)} left after weekly expenses.`;
-    const bills = `Protect ${aud(totals.weeklyExpenses)} for bills and essentials first.`;
-    const emergency =
-      toNum(state.profile.currentSavings) >= emergencyTarget
-        ? `Great progress: your emergency savings are near target (${aud(emergencyTarget)}).`
-        : `Build emergency savings first. Target is about ${aud(emergencyTarget)} (8 weeks essentials).`;
-    const goal = `Goal targets: short-term ${aud(goalWeekly.short)}/week, long-term ${aud(goalWeekly.long)}/week.`;
-    const allowance =
-      totals.leftover > 0
-        ? `After goals/savings, keep a capped flexible allowance.`
-        : "Pause flexible spending until cashflow is positive.";
-    const investing =
-      totals.leftover <= 0 ||
-      toNum(state.profile.currentSavings) < emergencyTarget
-        ? "Investing learning only for now: focus on ETF basics, diversification, and risk. No guaranteed returns."
-        : "You can begin beginner-safe investing education while continuing savings discipline.";
-    const exact =
-      totals.leftover > 0
-        ? `This week: auto-transfer ${aud(Math.max(0, Math.min(totals.leftover * 0.4, emergencyTarget - toNum(state.profile.currentSavings))))} to emergency savings, then ${aud(Math.min(totals.leftover * 0.4, goalWeekly.total))} to goals.`
-        : "This week: cut one discretionary category and re-check cashflow next payday.";
-    return { reality, bills, emergency, goal, allowance, investing, exact };
-  }, [totals, goalWeekly, state.profile.currentSavings, emergencyTarget]);
-
-  const affordability = useMemo(() => {
-    const missingCore =
-      !state.profile.weeklyIncome ||
-      expenseFields.every(([k]) => !state.expenses[k]);
-    const itemCost = toNum(state.affordability.cost);
-    const after = totals.leftover - itemCost;
-    const goalPressure = goalWeekly.total;
-    const emergencyGap = Math.max(
+  const biggest = useMemo(
+    () =>
+      expenseFields
+        .map(([k, l]) => ({ label: l, val: num(state.expenses[k]) }))
+        .sort((a, b) => b.val - a.val)[0] || { label: "N/A", val: 0 },
+    [state.expenses],
+  );
+  const action = useMemo(() => {
+    const save = Math.max(0, Math.round(totals.leftover * 0.55));
+    const investEdu = Math.max(0, Math.round(totals.leftover * 0.1));
+    const goal = Math.max(
       0,
-      emergencyTarget - toNum(state.profile.currentSavings),
+      Math.min(Math.round(totals.leftover * 0.2), Math.round(goalWeekly.total)),
     );
-    const emergencyStatus =
-      emergencyGap > 0
-        ? `Below target by ${aud(emergencyGap)} (target ${aud(emergencyTarget)}).`
-        : `On track (target ${aud(emergencyTarget)} reached).`;
+    const flex = Math.max(0, totals.leftover - save - goal - investEdu);
+    const behavior =
+      biggest.label === "Rent"
+        ? "Rent is fixed, so look for savings in flexible categories like takeaway, fun, transport, subscriptions."
+        : `Trim ${biggest.label.toLowerCase()} this week by 10-15%.`;
+    return { save, investEdu, goal, flex, behavior };
+  }, [totals.leftover, goalWeekly.total, biggest.label]);
 
-    if (missingCore) {
-      return {
-        verdict: "I need your weekly income and expenses first.",
-        after,
-        goalPressure,
-        emergencyStatus,
-        emergencyGap,
-      };
-    }
-    if (!itemCost) return null;
-    if (after < 0) {
-      return {
-        verdict: "No",
-        reason: `Buying this leaves you at ${aud(after)} for the week, which means bills and basics are no longer covered safely.`,
-        after,
-        goalPressure,
-        emergencyStatus,
-        emergencyGap,
-      };
-    }
-
-    const usesHalfAndWant =
-      state.affordability.urgency === "want" &&
-      itemCost > totals.leftover * 0.5;
-    if (usesHalfAndWant) {
-      return {
-        verdict: "Wait",
-        reason: `You could still have ${aud(after)} left, but this purchase uses more than half of your spare money (${aud(totals.leftover)}). Since it is a want, waiting keeps your plan steadier.`,
-        after,
-        goalPressure,
-        emergencyStatus,
-        emergencyGap,
-      };
-    }
-
-    const goalStretch = goalPressure > after;
-    const emergencyStillLow = emergencyGap > 0;
-    if (goalStretch || emergencyStillLow) {
-      return {
-        verdict: "Wait",
-        reason: `Technically you can buy this because you would still have ${aud(after)} left, but your weekly goal pressure is ${aud(goalPressure)} and your emergency fund is still below target, so waiting is smarter.`,
-        after,
-        goalPressure,
-        emergencyStatus,
-        emergencyGap,
-      };
-    }
-
+  const weeklyFocus = useMemo(() => {
+    const rule =
+      biggest.label === "Eating out / fun"
+        ? "Do not eat out more than 2 times this week."
+        : biggest.label === "Rent"
+          ? "Protect rent first; freeze non-essential spending for 48 hours."
+          : `Cap ${biggest.label.toLowerCase()} spending this week.`;
     return {
-      verdict: "Yes",
-      reason: `This fits your weekly plan: after buying, you keep ${aud(after)} and still have room for goals and emergency progress.`,
-      after,
-      goalPressure,
-      emergencyStatus,
-      emergencyGap,
+      rule,
+      saveTarget: action.save,
+      spendLimit: Math.max(0, Math.round(totals.income - action.save)),
     };
+  }, [biggest.label, action.save, totals.income]);
+
+  const wealthPath = useMemo(() => {
+    const savings = num(state.profile.currentSavings);
+    if (savings <= 0)
+      return {
+        stage: "Stage 1: Survival",
+        next: "Build your first $500 buffer by automating a small weekly transfer.",
+      };
+    if (savings < emergencyTarget)
+      return {
+        stage: "Stage 2: Stability",
+        next: `Grow emergency fund to ${aud(emergencyTarget)}.`,
+      };
+    if (totals.leftover > 0 && savings < 2000)
+      return {
+        stage: "Stage 3: Control",
+        next: "Keep consistent weekly saving until $2,000 cash buffer.",
+      };
+    return {
+      stage: "Stage 4: Growth",
+      next: "Open a low-fee brokerage account, start $50/week into broad ETF, hold 5+ years.",
+    };
+  }, [state.profile.currentSavings, totals.leftover, emergencyTarget]);
+  const affordability = useMemo(() => {
+    if (!state.profile.weeklyIncome || !totals.expenses)
+      return { verdict: "I need your weekly income and expenses first." };
+    const cost = num(state.affordability.cost);
+    if (!cost) return null;
+    const after = totals.leftover - cost;
+    if (after < 0)
+      return {
+        verdict: "NO",
+        reason: `This purchase puts you below $0 this week (${aud(after)}).`,
+        after,
+      };
+    if (state.affordability.urgency === "need")
+      return {
+        verdict: "YES",
+        reason: `It’s a need and you still have ${aud(after)} left after buying it.`,
+        after,
+      };
+    const slowsGoals = goalWeekly.total > 0 && after < goalWeekly.total;
+    if (state.affordability.urgency === "important")
+      return slowsGoals
+        ? {
+            verdict: "WAIT",
+            reason: `You can afford it, but it slows your weekly goal progress.`,
+            after,
+          }
+        : {
+            verdict: "YES",
+            reason: `Important and still safe this week with ${aud(after)} left.`,
+            after,
+          };
+    const clearlyAffordable =
+      after > totals.leftover * 0.6 &&
+      num(state.profile.currentSavings) >= emergencyTarget;
+    return clearlyAffordable
+      ? {
+          verdict: "YES",
+          reason: `You can buy it and still stay on track this week.`,
+          after,
+        }
+      : {
+          verdict: "WAIT",
+          reason: `It’s a want. Wait until savings/leftover are stronger.`,
+          after,
+        };
   }, [state, totals, goalWeekly.total, emergencyTarget]);
+
+  const leakage = useMemo(() => {
+    const latest = checkins[0];
+    if (!latest) return null;
+    const expected = Math.max(0, totals.leftover);
+    const actual = Math.max(0, num(latest.earned) - num(latest.spent));
+    const leak = Math.max(0, expected - actual);
+    const topTwo = expenseFields
+      .map(([k, l]) => ({ label: l, val: num(state.expenses[k]) }))
+      .sort((a, b) => b.val - a.val)
+      .slice(0, 2)
+      .map((x) => x.label);
+    return { expected, actual, leak, topTwo };
+  }, [checkins, totals.leftover, state.expenses]);
 
   const fetchMentorAdvice = async () => {
     setMentorLoading(true);
@@ -304,681 +300,516 @@ export default function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          profile: state.profile,
+          profile: { ...state.profile, mentorMode: state.mentorMode },
           expenses: state.expenses,
           goals: state.goals,
           question: mentorQuestion,
         }),
       });
-      if (!res.ok) throw new Error("API request failed.");
-      const data = await res.json();
-      setMentorAdvice(data.advice || "No advice returned.");
-    } catch (err) {
+      if (!res.ok) throw new Error();
+      const d = await res.json();
+      setMentorAdvice(d.advice || "No advice");
+    } catch {
       setMentorError(
-        "Could not reach AI mentor right now. Showing your built-in plan instead.",
+        "AI unavailable. Use the built-in weekly mentor plan below.",
       );
     } finally {
       setMentorLoading(false);
     }
   };
-  const setSection = (section, key, value) =>
-    setState((s) => ({ ...s, [section]: { ...s[section], [key]: value } }));
 
-  const saveCheckin = () =>
-    setCheckins((c) =>
-      [{ ...state.weeklyCheckin, date: new Date().toISOString() }, ...c].slice(
-        0,
-        12,
-      ),
-    );
+  const streak = useMemo(() => {
+    let saveWeeks = 0,
+      spendWeeks = 0;
+    for (const c of checkins) {
+      const saved = num(c.earned) - num(c.spent);
+      if (saved > 0) saveWeeks++;
+      if (num(c.spent) <= Math.max(0, weeklyFocus.spendLimit)) spendWeeks++;
+    }
+    return { saveWeeks, spendWeeks, onTrack: Math.min(saveWeeks, spendWeeks) };
+  }, [checkins, weeklyFocus.spendLimit]);
 
+  const nextBestMove = () => {
+    if (totals.leftover <= 0)
+      return "Do not spend anything non-essential for the next 2 days.";
+    if (num(state.profile.currentSavings) < emergencyTarget)
+      return `Move ${aud(Math.min(action.save, totals.leftover))} into savings right now.`;
+    if (goalWeekly.total > totals.leftover)
+      return "Push your goal deadline out and increase income by one extra shift this week.";
+    return `Auto-transfer ${aud(Math.max(50, Math.round(totals.leftover * 0.25)))} to goals now.`;
+  };
+
+  const setSec = (sec, k, v) =>
+    setState((s) => ({ ...s, [sec]: { ...s[sec], [k]: v } }));
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8">
-      <div className="max-w-6xl mx-auto space-y-5">
-        <header className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-          <h1 className="text-3xl font-bold">Money Mentor</h1>
+      <div className="max-w-6xl mx-auto space-y-4">
+        <header className="rounded-3xl bg-slate-900 border border-slate-800 p-5">
+          <h1 className="text-3xl font-bold">WTF do I do with my money?</h1>
           <p className="text-slate-300">
-            Guided weekly money planning for international students in
-            Australia.
+            PocketMentor is an AI money mentor for international students trying
+            to build wealth in Australia.
           </p>
         </header>
-
-        <div className="bg-cyan-950/40 border border-cyan-800 rounded-2xl p-4">
-          <h2 className="font-semibold">Your Money Mentor says:</h2>
-          <p className="text-cyan-100">{mentorSummary}</p>
-        </div>
-
         <nav className="flex flex-wrap gap-2">
           {["dashboard", "profile", "plan", "afford", "learn", "check-in"].map(
             (t) => (
               <button
                 key={t}
-                className={`px-3 py-2 rounded-full border ${tab === t ? "bg-cyan-600 border-cyan-500" : "bg-slate-900 border-slate-700"}`}
                 onClick={() => setTab(t)}
+                className={`px-3 py-2 rounded-full ${tab === t ? "bg-violet-600" : "bg-slate-800"}`}
               >
                 {t}
               </button>
             ),
           )}
         </nav>
-
         {tab === "dashboard" && (
-          <section className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {[
-              ["Weekly income", aud(totals.weeklyIncome)],
-              ["Weekly expenses", aud(totals.weeklyExpenses)],
-              ["Leftover money", aud(totals.leftover)],
-              ["Savings rate", `${totals.savingsRate.toFixed(1)}%`],
-              [
-                "Emergency fund status",
-                toNum(state.profile.currentSavings) >= emergencyTarget
-                  ? "On track"
-                  : "Needs work",
-              ],
-              [
-                "Short goal progress",
-                `${aud(state.profile.currentSavings)} / ${aud(state.goals.shortAmount)}`,
-              ],
-              [
-                "Long goal progress",
-                `${aud(state.profile.currentSavings)} / ${aud(state.goals.longAmount)}`,
-              ],
-            ].map(([k, v]) => (
-              <div
-                key={k}
-                className="bg-slate-900 border border-slate-800 rounded-xl p-4"
-              >
-                <p className="text-slate-400 text-sm">{k}</p>
-                <p className="font-semibold">{v}</p>
+          <section className="space-y-3">
+            <div className="bg-violet-900/40 border border-violet-500 rounded-2xl p-5">
+              <p className="text-sm text-violet-200">THIS WEEK'S FOCUS</p>
+              <p className="text-lg font-bold">Rule: {weeklyFocus.rule}</p>
+              <p className="text-lg font-bold">
+                Save: {aud(weeklyFocus.saveTarget)}
+              </p>
+              <p className="text-lg font-bold">
+                Max spend: {aud(weeklyFocus.spendLimit)}
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {[
+                ["Income", aud(totals.income)],
+                ["Expenses", aud(totals.expenses)],
+                ["Leftover", aud(totals.leftover)],
+                ["Savings rate", `${totals.savingsRate.toFixed(1)}%`],
+              ].map(([k, v]) => (
+                <div
+                  key={k}
+                  className="bg-slate-900 border border-slate-800 rounded-2xl p-4"
+                >
+                  <div className="text-xs text-slate-400">{k}</div>
+                  <div className="font-semibold">{v}</div>
+                </div>
+              ))}
+            </div>
+            <div className="grid lg:grid-cols-2 gap-3">
+              <div className="bg-slate-900 rounded-2xl p-4 h-72">
+                <ResponsiveContainer>
+                  <BarChart
+                    data={[
+                      {
+                        name: "Week",
+                        income: totals.income,
+                        expenses: totals.expenses,
+                        leftover: totals.leftover,
+                      },
+                    ]}
+                  >
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="income" fill="#22d3ee" />
+                    <Bar dataKey="expenses" fill="#f43f5e" />
+                    <Bar dataKey="leftover" fill="#8b5cf6" />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
-            ))}
+              <div className="bg-slate-900 rounded-2xl p-4 h-72">
+                <ResponsiveContainer>
+                  <PieChart>
+                    <Pie
+                      data={expenseFields
+                        .map(([k, l]) => ({
+                          name: l,
+                          value: num(state.expenses[k]),
+                        }))
+                        .filter((x) => x.value > 0)}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={95}
+                    >
+                      {colors.map((c, i) => (
+                        <Cell key={i} fill={c} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            <div className="bg-slate-900 rounded-2xl p-4 text-sm space-y-1">
+              <b>Why am I not getting ahead?</b>
+              {!leakage ? (
+                <p className="mt-1 text-slate-300">
+                  Add at least one weekly check-in to compare expected vs actual
+                  savings.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Your budget says save {aud(leakage.expected)} but you saved{" "}
+                    {aud(leakage.actual)}.
+                  </p>
+                  {leakage.leak > 0 && (
+                    <p className="text-rose-300">
+                      You are off track by {aud(leakage.leak)} this week. Main
+                      cause: overspending in {leakage.topTwo[0]}.
+                    </p>
+                  )}
+                  <p>
+                    You lost {aud(leakage.leak)} this week. Most likely causes:{" "}
+                    {leakage.topTwo.join(" and ")}.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="bg-slate-900 rounded-2xl p-4 text-sm">
+              <p>
+                <b>Wealth Path:</b> {wealthPath.stage}
+              </p>
+              <p>{wealthPath.next}</p>
+              <p className="mt-1">
+                Streak: You've stayed on track for {streak.onTrack} weeks (saved
+                money {streak.saveWeeks} weeks, under limit {streak.spendWeeks}{" "}
+                weeks).
+              </p>
+              <button
+                className="mt-3 bg-violet-600 px-3 py-2 rounded"
+                onClick={() => alert(nextBestMove())}
+              >
+                What is my next best move?
+              </button>
+            </div>
           </section>
         )}
 
         {tab === "profile" && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-6">
-            <h2 className="text-xl font-semibold">Guided setup</h2>
-            <div className="space-y-3">
-              <h3 className="font-semibold">About me</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field
-                  label="Name"
-                  helper="How should your mentor address you?"
-                >
+          <section className="bg-slate-900 rounded-2xl p-5 space-y-3">
+            <h2 className="font-semibold text-xl">Profile & inputs</h2>
+            <div className="grid md:grid-cols-2 gap-3">
+              <Field
+                label="Weekly income"
+                helper="After-tax money you receive each week."
+              >
+                <input
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.profile.weeklyIncome}
+                  onChange={(e) =>
+                    setSec("profile", "weeklyIncome", e.target.value)
+                  }
+                  placeholder="1000"
+                />
+              </Field>
+              <Field label="Current savings" helper="Money already saved.">
+                <input
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.profile.currentSavings}
+                  onChange={(e) =>
+                    setSec("profile", "currentSavings", e.target.value)
+                  }
+                  placeholder="1500"
+                />
+              </Field>
+              {expenseFields.map(([k, l, d]) => (
+                <Field key={k} label={l} helper={d}>
                   <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="Anjali"
-                    value={state.profile.name}
-                    onChange={(e) =>
-                      setSection("profile", "name", e.target.value)
-                    }
+                    className="bg-slate-800 p-2 rounded w-full"
+                    value={state.expenses[k]}
+                    onChange={(e) => setSec("expenses", k, e.target.value)}
+                    placeholder="0"
                   />
                 </Field>
-                <Field
-                  label="City in Australia"
-                  helper="Your current city helps contextualize costs."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="Sydney"
-                    value={state.profile.city}
-                    onChange={(e) =>
-                      setSection("profile", "city", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Visa/status"
-                  helper="Choose the option closest to your situation."
-                >
-                  <select
-                    className="bg-slate-800 rounded p-2 w-full"
-                    value={state.profile.status}
-                    onChange={(e) =>
-                      setSection("profile", "status", e.target.value)
-                    }
-                  >
-                    <option>international student</option>
-                    <option>resident</option>
-                    <option>citizen</option>
-                    <option>working holiday</option>
-                    <option>other</option>
-                  </select>
-                </Field>
-                <Field
-                  label="Number of jobs"
-                  helper="How many jobs currently contribute to your income?"
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="1"
-                    value={state.profile.jobs}
-                    onChange={(e) =>
-                      setSection("profile", "jobs", e.target.value)
-                    }
-                  />
-                </Field>
-              </div>
+              ))}
             </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold">Income</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field
-                  label="Weekly income"
-                  helper="How much money do you usually receive each week after tax?"
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="1000"
-                    value={state.profile.weeklyIncome}
-                    onChange={(e) =>
-                      setSection("profile", "weeklyIncome", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Current bank balance"
-                  helper="Total cash currently in your everyday account(s)."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="1800"
-                    value={state.profile.bankBalance}
-                    onChange={(e) =>
-                      setSection("profile", "bankBalance", e.target.value)
-                    }
-                  />
-                </Field>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold">Current money situation</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field
-                  label="Current savings"
-                  helper="Money you already have saved, not including this week’s income."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="1200"
-                    value={state.profile.currentSavings}
-                    onChange={(e) =>
-                      setSection("profile", "currentSavings", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Current debt"
-                  helper="Total debt balance you still need to repay."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="500"
-                    value={state.profile.currentDebt}
-                    onChange={(e) =>
-                      setSection("profile", "currentDebt", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Money confidence level"
-                  helper="How confident do you feel with money decisions?"
-                >
-                  <select
-                    className="bg-slate-800 rounded p-2 w-full"
-                    value={state.profile.confidence}
-                    onChange={(e) =>
-                      setSection("profile", "confidence", e.target.value)
-                    }
-                  >
-                    <option>anxious</option>
-                    <option>beginner</option>
-                    <option>improving</option>
-                    <option>confident</option>
-                  </select>
-                </Field>
-                <Field
-                  label="Risk comfort"
-                  helper="Your comfort with investment ups and downs."
-                >
-                  <select
-                    className="bg-slate-800 rounded p-2 w-full"
-                    value={state.profile.risk}
-                    onChange={(e) =>
-                      setSection("profile", "risk", e.target.value)
-                    }
-                  >
-                    <option>low</option>
-                    <option>medium</option>
-                    <option>high</option>
-                  </select>
-                </Field>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold">Weekly expenses</h3>
-              <div className="space-y-2">
-                {expenseFields.map(([k, label, desc]) => (
-                  <div
-                    key={k}
-                    className="grid md:grid-cols-3 gap-2 bg-slate-800/60 rounded p-3"
-                  >
-                    <div>
-                      <p className="font-medium">{label}</p>
-                      <p className="text-xs text-slate-400">{desc}</p>
-                    </div>
-                    <input
-                      className="bg-slate-800 border border-slate-700 rounded p-2 md:col-span-2"
-                      placeholder="0"
-                      value={state.expenses[k]}
-                      onChange={(e) =>
-                        setSection("expenses", k, e.target.value)
-                      }
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold">Goals</h3>
-              <div className="grid md:grid-cols-2 gap-3">
-                <Field
-                  label="Short-term goal"
-                  helper="Example: Save for laptop upgrade"
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="Save $5,000 for emergency cushion"
-                    value={state.goals.shortName}
-                    onChange={(e) =>
-                      setSection("goals", "shortName", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Short-term amount"
-                  helper="Target amount for this goal."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="5000"
-                    value={state.goals.shortAmount}
-                    onChange={(e) =>
-                      setSection("goals", "shortAmount", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Short-term deadline"
-                  helper="When do you want to hit this goal?"
-                >
-                  <input
-                    type="date"
-                    className="bg-slate-800 rounded p-2 w-full"
-                    value={state.goals.shortDeadline}
-                    onChange={(e) =>
-                      setSection("goals", "shortDeadline", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Long-term goal"
-                  helper="Example: long-term wealth target"
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="Have $400,000 in 3 years"
-                    value={state.goals.longName}
-                    onChange={(e) =>
-                      setSection("goals", "longName", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Long-term amount"
-                  helper="Target amount for long-term goal."
-                >
-                  <input
-                    className="bg-slate-800 rounded p-2 w-full"
-                    placeholder="400000"
-                    value={state.goals.longAmount}
-                    onChange={(e) =>
-                      setSection("goals", "longAmount", e.target.value)
-                    }
-                  />
-                </Field>
-                <Field
-                  label="Long-term deadline"
-                  helper="Choose target completion date."
-                >
-                  <input
-                    type="date"
-                    className="bg-slate-800 rounded p-2 w-full"
-                    value={state.goals.longDeadline}
-                    onChange={(e) =>
-                      setSection("goals", "longDeadline", e.target.value)
-                    }
-                  />
-                </Field>
-              </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              <Field
+                label="Short goal amount"
+                helper={
+                  goalWeekly.short.status === "ok"
+                    ? ""
+                    : "Add amount + deadline."
+                }
+              >
+                <input
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.goals.shortAmount}
+                  onChange={(e) =>
+                    setSec("goals", "shortAmount", e.target.value)
+                  }
+                  placeholder="10000"
+                />
+              </Field>
+              <Field
+                label="Short goal deadline"
+                helper={
+                  goalWeekly.short.status === "ok"
+                    ? `Weekly target ${aud(goalWeekly.short.value)}`
+                    : goalWeekly.short.status
+                }
+              >
+                <input
+                  type="date"
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.goals.shortDeadline}
+                  onChange={(e) =>
+                    setSec("goals", "shortDeadline", e.target.value)
+                  }
+                />
+              </Field>
+              <Field
+                label="Long goal amount"
+                helper={
+                  goalWeekly.long.status === "ok"
+                    ? ""
+                    : "Add amount + deadline."
+                }
+              >
+                <input
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.goals.longAmount}
+                  onChange={(e) =>
+                    setSec("goals", "longAmount", e.target.value)
+                  }
+                  placeholder="400000"
+                />
+              </Field>
+              <Field
+                label="Long goal deadline"
+                helper={
+                  goalWeekly.long.status === "ok"
+                    ? `Weekly target ${aud(goalWeekly.long.value)}`
+                    : goalWeekly.long.status
+                }
+              >
+                <input
+                  type="date"
+                  className="bg-slate-800 p-2 rounded w-full"
+                  value={state.goals.longDeadline}
+                  onChange={(e) =>
+                    setSec("goals", "longDeadline", e.target.value)
+                  }
+                />
+              </Field>
             </div>
           </section>
         )}
 
         {tab === "plan" && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-            <h2 className="text-xl font-semibold">Weekly plan</h2>
-            <div className="grid md:grid-cols-2 gap-3 text-sm">
-              {[
-                ["Weekly income", aud(totals.weeklyIncome)],
-                ["Weekly expenses", aud(totals.weeklyExpenses)],
-                ["Leftover after bills", aud(totals.leftover)],
-                ["Short-term goal target per week", aud(goalWeekly.short)],
-                ["Long-term goal target per week", aud(goalWeekly.long)],
-              ].map(([k, v]) => (
-                <div key={k} className="bg-slate-800 rounded p-3">
-                  <p className="text-slate-400">{k}</p>
-                  <p className="font-semibold">{v}</p>
-                </div>
-              ))}
+          <section className="bg-slate-900 rounded-2xl p-5 space-y-3 text-sm">
+            <h2 className="text-xl font-semibold">Weekly Plan (simple)</h2>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>Money diagnosis:</b> You have {aud(totals.leftover)} left after
+              bills. Biggest pressure: {biggest.label} ({aud(biggest.val)}).
             </div>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>What to do this week:</b> Save {aud(action.save)}. Put{" "}
+              {aud(action.goal)} toward goals. Keep {aud(action.flex)} for
+              flexible spending.
+            </div>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>What NOT to do:</b> Don't buy wants that cut into emergency
+              savings.
+            </div>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>Save / spend / invest split:</b> Save {aud(action.save)} •
+              Spend {aud(action.flex)} • Invest {aud(action.investEdu)}
+            </div>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>Wealth-building next step:</b>{" "}
+              {num(state.profile.currentSavings) < emergencyTarget
+                ? "Finish emergency fund first."
+                : "Start tiny diversified ETF contributions after bills and savings are handled."}
+            </div>
+            <div className="bg-slate-800 rounded-xl p-3">
+              <b>Reality check:</b>{" "}
+              {goalWeekly.short.status !== "ok" ||
+              goalWeekly.long.status !== "ok"
+                ? "Add valid goal deadlines to get realistic weekly targets."
+                : goalWeekly.total > totals.leftover
+                  ? "At your current income, this goal is not achievable unless you increase income or extend timeline."
+                  : "Your goals are realistic if you stick to this week's plan."}
+            </div>
+            <Field label="Mentor Mode" helper="Changes tone of AI advice.">
+              <select
+                className="bg-slate-800 p-2 rounded w-full"
+                value={state.mentorMode}
+                onChange={(e) =>
+                  setState((s) => ({ ...s, mentorMode: e.target.value }))
+                }
+              >
+                <option>gentle</option>
+                <option>strict</option>
+                <option>big sister</option>
+                <option>wealth coach</option>
+              </select>
+            </Field>
+            <Field label="Ask AI mentor" helper="Gets practical 7-day advice.">
+              <input
+                className="bg-slate-800 p-2 rounded w-full"
+                value={mentorQuestion}
+                onChange={(e) => setMentorQuestion(e.target.value)}
+              />
+            </Field>
             <button
-              className="bg-cyan-600 px-4 py-2 rounded"
-              onClick={() => setShowPlan(true)}
+              className="bg-violet-600 px-4 py-2 rounded"
+              onClick={fetchMentorAdvice}
             >
-              What should I do with my money this week?
+              {mentorLoading ? "Thinking..." : "Ask AI mentor"}
             </button>
-            {showPlan && (
-              <div className="space-y-2 text-sm bg-slate-800 rounded p-4">
-                <p>
-                  <b>Reality check:</b> {planSections.reality}
-                </p>
-                <p>
-                  <b>Bills first:</b> {planSections.bills}
-                </p>
-                <p>
-                  <b>Emergency fund:</b> {planSections.emergency}
-                </p>
-                <p>
-                  <b>Goal plan:</b> {planSections.goal}
-                </p>
-                <p>
-                  <b>Spending allowance:</b> {planSections.allowance}
-                </p>
-                <p>
-                  <b>Investing learning:</b> {planSections.investing}
-                </p>
-                <p>
-                  <b>This week’s exact action:</b> {planSections.exact}
-                </p>
+            {mentorError && <p className="text-amber-300">{mentorError}</p>}
+            {mentorAdvice && (
+              <div className="bg-slate-800 rounded-xl p-3 whitespace-pre-wrap">
+                {mentorAdvice}
               </div>
             )}
-            <div className="space-y-2">
-              <Field
-                label="Ask the AI mentor a question"
-                helper="Optional: Ask for a clearer weekly plan in your own words."
-              >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  value={mentorQuestion}
-                  onChange={(e) => setMentorQuestion(e.target.value)}
-                />
-              </Field>
-              <button
-                className="bg-indigo-600 px-4 py-2 rounded"
-                onClick={fetchMentorAdvice}
-                disabled={mentorLoading}
-              >
-                {mentorLoading ? "Asking mentor..." : "Ask AI mentor"}
-              </button>
-              {mentorError && (
-                <p className="text-amber-300 text-sm">{mentorError}</p>
-              )}
-              {mentorAdvice && (
-                <div className="bg-slate-800 rounded p-4 whitespace-pre-wrap text-sm">
-                  <b>AI mentor advice</b>
-                  {mentorAdvice}
-                </div>
-              )}
-            </div>
           </section>
         )}
 
         {tab === "afford" && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+          <section className="bg-slate-900 rounded-2xl p-5 space-y-2">
             <h2 className="text-xl font-semibold">Can I afford this?</h2>
-            <div className="grid md:grid-cols-2 gap-3">
-              <Field label="Item name" helper="What do you want to buy?">
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="New headphones"
-                  value={state.affordability.item}
-                  onChange={(e) =>
-                    setSection("affordability", "item", e.target.value)
-                  }
-                />
-              </Field>
-              <Field label="Item cost" helper="Total cost for this purchase.">
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="180"
-                  value={state.affordability.cost}
-                  onChange={(e) =>
-                    setSection("affordability", "cost", e.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label="Urgency"
-                helper="Need = essential, Want = optional."
+            <div className="grid md:grid-cols-2 gap-2">
+              <input
+                className="bg-slate-800 p-2 rounded"
+                placeholder="Item"
+                value={state.affordability.item}
+                onChange={(e) =>
+                  setSec("affordability", "item", e.target.value)
+                }
+              />
+              <input
+                className="bg-slate-800 p-2 rounded"
+                placeholder="Cost"
+                value={state.affordability.cost}
+                onChange={(e) =>
+                  setSec("affordability", "cost", e.target.value)
+                }
+              />
+              <select
+                className="bg-slate-800 p-2 rounded"
+                value={state.affordability.urgency}
+                onChange={(e) =>
+                  setSec("affordability", "urgency", e.target.value)
+                }
               >
-                <select
-                  className="bg-slate-800 rounded p-2 w-full"
-                  value={state.affordability.urgency}
-                  onChange={(e) =>
-                    setSection("affordability", "urgency", e.target.value)
-                  }
-                >
-                  <option>need</option>
-                  <option>important</option>
-                  <option>want</option>
-                </select>
-              </Field>
-              <Field
-                label="Category"
-                helper="Example: study, transport, lifestyle"
-              >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="Lifestyle"
-                  value={state.affordability.category}
-                  onChange={(e) =>
-                    setSection("affordability", "category", e.target.value)
-                  }
-                />
-              </Field>
+                <option>need</option>
+                <option>important</option>
+                <option>want</option>
+              </select>
             </div>
-            <div className="bg-slate-800 rounded p-4 text-sm space-y-1">
-              <p>
-                Weekly income: <b>{aud(totals.weeklyIncome)}</b>
-              </p>
-              <p>
-                Weekly expenses: <b>{aud(totals.weeklyExpenses)}</b>
-              </p>
-              <p>
-                Leftover before purchase: <b>{aud(totals.leftover)}</b>
-              </p>
-              <p>
-                Item cost: <b>{aud(state.affordability.cost)}</b>
-              </p>
-              <p>
-                Leftover after purchase:{" "}
-                <b>{aud(totals.leftover - toNum(state.affordability.cost))}</b>
-              </p>
+            <div className="bg-slate-800 rounded p-3 text-sm">
+              Weekly income {aud(totals.income)} • Weekly expenses{" "}
+              {aud(totals.expenses)} • Leftover before purchase{" "}
+              {aud(totals.leftover)} • Item cost {aud(state.affordability.cost)}{" "}
+              • Leftover after purchase{" "}
+              {aud(totals.leftover - num(state.affordability.cost))}
             </div>
             {affordability && (
-              <div className="bg-slate-800 rounded p-4 space-y-1">
-                <p className="font-semibold">{affordability.verdict}</p>
-                {affordability.reason && (
-                  <p className="text-sm text-slate-300">
-                    {affordability.reason}
-                  </p>
-                )}
-                <p className="text-xs text-slate-400">
-                  Goal pressure this week:{" "}
-                  {aud(affordability.goalPressure || 0)} (this is what your
-                  goals need per week).
-                </p>
-                <p className="text-xs text-slate-400">
-                  Emergency fund status: {affordability.emergencyStatus}
-                </p>
+              <div className="bg-slate-800 rounded p-3">
+                <b>{affordability.verdict}</b>
+                <p className="text-sm mt-1">{affordability.reason}</p>
               </div>
             )}
           </section>
         )}
 
         {tab === "learn" && (
-          <section className="grid md:grid-cols-2 gap-3">
-            {learnCards.map((card) => (
-              <button
-                key={card.key}
-                onClick={() =>
-                  setExpandedLearn(expandedLearn === card.key ? "" : card.key)
-                }
-                className="text-left bg-slate-900 border border-slate-800 rounded-xl p-4"
+          <section className="grid md:grid-cols-2 gap-2">
+            {learnCards.map(([t, l]) => (
+              <a
+                key={t}
+                href={l}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-slate-900 rounded-xl p-4 border border-slate-800 hover:border-violet-500"
               >
-                <p className="font-semibold">{card.title}</p>
-                {expandedLearn === card.key && (
-                  <div className="mt-2 text-sm text-slate-300 space-y-1">
-                    <p>
-                      <b>Simple explanation:</b> {card.explain}
-                    </p>
-                    <p>
-                      <b>Why this matters for international students:</b>{" "}
-                      {card.why}
-                    </p>
-                    <p>
-                      <b>Action this week:</b> {card.action}
-                    </p>
-                    <a
-                      className="text-cyan-300 underline"
-                      href={card.link}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Beginner-safe learning link
-                    </a>
-                  </div>
-                )}
-              </button>
+                <b>{t}</b>
+                <p className="text-xs text-slate-400 mt-1">
+                  Open trusted beginner resource
+                </p>
+              </a>
             ))}
           </section>
         )}
 
         {tab === "check-in" && (
-          <section className="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
-            <h2 className="text-xl font-semibold">Weekly check-in</h2>
-            <div className="grid md:grid-cols-2 gap-3">
-              <Field
-                label="How much did I earn this week?"
-                helper="Enter after-tax weekly income."
+          <section className="bg-slate-900 rounded-2xl p-5 space-y-2">
+            <div className="grid md:grid-cols-2 gap-2">
+              <input
+                className="bg-slate-800 p-2 rounded"
+                placeholder="Earned this week"
+                value={state.weeklyCheckin.earned}
+                onChange={(e) =>
+                  setSec("weeklyCheckin", "earned", e.target.value)
+                }
+              />
+              <input
+                className="bg-slate-800 p-2 rounded"
+                placeholder="Spent this week"
+                value={state.weeklyCheckin.spent}
+                onChange={(e) =>
+                  setSec("weeklyCheckin", "spent", e.target.value)
+                }
+              />
+              <select
+                className="bg-slate-800 p-2 rounded"
+                value={state.weeklyCheckin.saved}
+                onChange={(e) =>
+                  setSec("weeklyCheckin", "saved", e.target.value)
+                }
               >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="980"
-                  value={state.weeklyCheckin.earned}
-                  onChange={(e) =>
-                    setSection("weeklyCheckin", "earned", e.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label="How much did I spend this week?"
-                helper="Total weekly spending across all categories."
-              >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="760"
-                  value={state.weeklyCheckin.spent}
-                  onChange={(e) =>
-                    setSection("weeklyCheckin", "spent", e.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label="Did I save money this week?"
-                helper="Honest yes/no reflection."
-              >
-                <select
-                  className="bg-slate-800 rounded p-2 w-full"
-                  value={state.weeklyCheckin.saved}
-                  onChange={(e) =>
-                    setSection("weeklyCheckin", "saved", e.target.value)
-                  }
-                >
-                  <option>yes</option>
-                  <option>no</option>
-                </select>
-              </Field>
-              <Field
-                label="What money mistake did I make?"
-                helper="Name one thing you can improve."
-              >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="Overspent on takeaway"
-                  value={state.weeklyCheckin.mistake}
-                  onChange={(e) =>
-                    setSection("weeklyCheckin", "mistake", e.target.value)
-                  }
-                />
-              </Field>
-              <Field
-                label="What money decision am I proud of?"
-                helper="Celebrate one positive money action."
-              >
-                <input
-                  className="bg-slate-800 rounded p-2 w-full"
-                  placeholder="I saved before spending"
-                  value={state.weeklyCheckin.proud}
-                  onChange={(e) =>
-                    setSection("weeklyCheckin", "proud", e.target.value)
-                  }
-                />
-              </Field>
+                <option>yes</option>
+                <option>no</option>
+              </select>
+              <input
+                className="bg-slate-800 p-2 rounded"
+                placeholder="Money mistake"
+                value={state.weeklyCheckin.mistake}
+                onChange={(e) =>
+                  setSec("weeklyCheckin", "mistake", e.target.value)
+                }
+              />
+              <input
+                className="bg-slate-800 p-2 rounded md:col-span-2"
+                placeholder="Decision I'm proud of"
+                value={state.weeklyCheckin.proud}
+                onChange={(e) =>
+                  setSec("weeklyCheckin", "proud", e.target.value)
+                }
+              />
             </div>
             <button
-              className="bg-cyan-600 px-4 py-2 rounded"
-              onClick={saveCheckin}
+              className="bg-violet-600 px-4 py-2 rounded"
+              onClick={() =>
+                setCheckins((c) =>
+                  [
+                    { ...state.weeklyCheckin, date: new Date().toISOString() },
+                    ...c,
+                  ].slice(0, 12),
+                )
+              }
             >
               Save check-in
             </button>
-            <div className="grid md:grid-cols-2 gap-2">
-              {checkins.map((c, idx) => (
-                <div key={idx} className="bg-slate-800 rounded p-3 text-sm">
-                  <p className="text-slate-400">
-                    {new Date(c.date).toLocaleDateString()}
-                  </p>
-                  <p>
-                    Earned {aud(c.earned)} • Spent {aud(c.spent)} • Saved:{" "}
-                    {c.saved}
-                  </p>
-                  <p>Mistake: {c.mistake || "-"}</p>
-                  <p>Proud: {c.proud || "-"}</p>
-                </div>
-              ))}
-            </div>
+            {checkins.map((c, i) => (
+              <div key={i} className="bg-slate-800 rounded p-3 text-sm">
+                {new Date(c.date).toLocaleDateString()} • Earned {aud(c.earned)}{" "}
+                • Spent {aud(c.spent)} • Saved {c.saved}
+              </div>
+            ))}
           </section>
         )}
-
-        <footer className="text-xs text-slate-400 bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <section className="bg-slate-900 rounded-xl p-4 text-sm">
+          <b>Coming soon</b>
+          <ul className="list-disc pl-5 text-slate-300">
+            <li>Location-aware financial guidance</li>
+            <li>Cross-country wealth planning</li>
+            <li>Career and income growth suggestions</li>
+          </ul>
+        </section>
+        <footer className="text-xs text-slate-400 bg-slate-900 rounded-xl p-4">
           This app provides educational guidance only and is not professional
-          financial advice. For personal financial decisions, consider speaking
-          with a qualified financial adviser.
+          financial advice.
         </footer>
       </div>
     </div>

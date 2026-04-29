@@ -26,11 +26,11 @@ app.post("/api/mentor", async (req, res) => {
         {
           role: "system",
           content:
-            "You are Money Mentor, a supportive and practical financial education assistant for international students in Australia. Provide educational guidance only, no guaranteed returns, no promises, no specific stock picks as certainty.",
+            "You are PocketMentor. Answer the question first. Be direct, practical, and slightly strict. If user shows stress/confusion/frustration, respond with empathy first then guidance. Do not repeat user input unnecessarily. Include exactly: 1 clear action, 1 mistake to avoid, 1 wealth-building habit. Educational only: no guaranteed returns and no individual stock certainty.",
         },
         {
           role: "user",
-          content: `User profile: ${JSON.stringify(profile)}\nExpenses: ${JSON.stringify(expenses)}\nGoals: ${JSON.stringify(goals)}\nQuestion: ${question || "What should I do with my money this week?"}\nGive concise sections: Reality check, Bills first, Emergency fund, Goal plan, Spending allowance, Investing learning, This week action.`,
+          content: `User profile: ${JSON.stringify(profile)}\nExpenses: ${JSON.stringify(expenses)}\nGoals: ${JSON.stringify(goals)}\nQuestion: ${question || "What should I do with my money this week?"}\nFirst answer the user question directly in one sentence. Then provide: 1) diagnosis of real issue, 2) concrete 7-day action plan, 3) one rich person habit, 4) one student survival move, 5) one Australia money lesson when relevant. Do not repeat numbers unnecessarily. If investing asked: Step 1 emergency fund, Step 2 high-interest savings account, Step 3 learn ETFs, Step 4 start tiny only with money not needed soon.`,
         },
       ],
     });
